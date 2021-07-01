@@ -5,7 +5,10 @@ use crate::parser::{Parser, Expression};
 use crate::expression_splitter::ExpressionSplitter;
 use crate::compiler::Compiler;
 use std::path::Path;
+use std::fs::{File, create_dir};
+use std::io::{Read, Write};
 
+//todo make the modules actual modules instead of random files
 #[path="./lexer/lexer.rs"]
 mod lexer;
 #[path="./parser/expression_splitter.rs"]
@@ -24,8 +27,8 @@ const INTERMEDIATE_EXTENSION: &str = "bi"; // balls intermediate
 fn main() {
     let program_dir = "./program/";
     let filename = program_dir.to_owned() + "src/main." + SOURCE_EXTENSION;
-    let output_dir = program_dir.to_owned() + "output/";
-    let intermediate_asm_dir = output_dir + "inter." + INTERMEDIATE_EXTENSION;
+    let intermediate_asm_dir = program_dir.to_owned() + "intermediate/";
+    let intermediate_asm_file = intermediate_asm_dir.clone() + "inter." + INTERMEDIATE_EXTENSION;
 
     let tokens = Lexer::from_file(&*filename).unwrap().produce_tokens();
     let expression_splitter = ExpressionSplitter::from_vec(tokens);
@@ -54,15 +57,18 @@ fn main() {
         }
     }
 
-
-    let mut compiler = Compiler::new(expression_vec, Path::new(intermediate_asm_dir.as_str()));
+    let intermediate_asm_dir_path = Path::new(intermediate_asm_file.as_str());
+    if !intermediate_asm_dir_path.exists() {
+        create_dir(intermediate_asm_dir).unwrap();
+        File::create(intermediate_asm_file.clone()).unwrap();
+    }
+    let mut compiler = Compiler::new(expression_vec, intermediate_asm_dir_path);
     compiler.do_boilerplate();
     compiler.do_text_section();
     // add instructions
     //compiler.add_asm();
     compiler.do_end_program();
     compiler.do_data_section();
-    // add constants
     for constant_expression in constants {
         compiler.add_constants(constant_expression);
     }

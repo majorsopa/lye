@@ -90,34 +90,43 @@ impl Compiler {
             },
             _ => panic!("incorrect constant syntax."),
         }
+
+        let mut is_literal: bool = true;
         // index 3 to get the value
-        let cont_value_literal = match expression.get(3).unwrap() {
-            Token::Literal(val) => val,
+        let mut cont_value_literal: &Literal = &Literal::Str("rust compiler is dumb".parse().unwrap());
+
+        match expression.get(3).expect("incorrect constant syntax.") {
+            Token::Literal(val) => cont_value_literal = val,
+            // 0 is false 1 is true
+            Token::Symbol(val) if val == &"true".to_string() => {
+                code.push_str("equ ");
+                code.push_str("1");
+                is_literal = false;
+            },
+            Token::Symbol(val) if val == &"false".to_string() => {
+                code.push_str("equ ");
+                code.push_str("0");
+                is_literal = false;
+            },
             _ => panic!("incorrect constant syntax."),
         };
 
-        match cont_value_literal {
-            Literal::Str(val) => {
-                code.push_str("db ");
-                code.push('"');
-                code.push_str(val);
-                code.push('"');
-            }
-            Literal::Integer(val) => {
-                code.push_str("equ");
-                code.push_str(val.to_string().as_str());
-            }
-            Literal::Bool(val) => {
-                code.push_str("equ");
-                // 0 is false 1 is true
-                let bool_val_str = match val {
-                    false => "0",
-                    true => "1",
-                };
-                code.push_str(bool_val_str);
+        if is_literal {
+            match cont_value_literal {
+                Literal::Str(val) => {
+                    code.push_str("db ");
+                    code.push('"');
+                    code.push_str(val);
+                    code.push('"');
+                },
+                Literal::Integer(val) => {
+                    code.push_str("equ ");
+                    code.push_str(val.to_string().as_str());
+                },
             }
         }
 
+        code.push('\n');
         self.file.write_all(code.as_bytes()).expect("Failed to write code to file.");
     }
 

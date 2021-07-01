@@ -13,4 +13,4 @@ end_program:
     call _ExitProcess@4
 
 section .data
-    test db "hello world"
+    test0 db "hello world"    test1 db "goodbye world"

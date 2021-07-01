@@ -35,7 +35,6 @@ pub enum Token {
 pub enum Literal {
     Str(String),
     Integer(i32),
-    Bool(bool)
 }
 
 pub struct Lexer {
