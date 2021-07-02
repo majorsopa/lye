@@ -192,7 +192,6 @@ impl Compiler {
             Token::Symbol(in_import) if in_import == "std_print" => {
                 non_doubling_import!(code, WINDOWS_STD_HANDLE_IMPORT, self.windows_std_handle_input_bool);
                 non_doubling_import!(code, WRITEFILE, self.writefile_bool);
-                non_doubling_import!(code, MALLOC_IMPORT, self.malloc_import_bool);
             },
             _ => panic!("incorrect import syntax."),
         }
