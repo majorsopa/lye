@@ -39,4 +39,4 @@ end_program:
     call _ExitProcess@4
 
 section .data
-    testyy0_0123456789 db 'Hello World!...', 0
+    testyy0_0123456789 db 'Hello World!', 0

@@ -1,4 +1,4 @@
 import std_print;
 
-const testyy0 = "Hello World!...";
+const testyy0 = "Hello World!";
 print(testyy0);
