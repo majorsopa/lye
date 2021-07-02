@@ -8,6 +8,30 @@ global Start
 section .text
 
 Start:
+    mov edx, testyy0_0123456789
+    push edx
+    mov ecx,0
+    dec edx
+    count0:
+        inc ecx
+        inc edx
+        cmp byte[edx], 0
+        jnz count0
+    dec ecx
+    pop edx
+
+    push    -11
+    call    _GetStdHandle@4
+    mov     ebx, eax
+
+    push    0
+    lea     eax, [ebp-4]
+    push    eax
+    push    ecx
+    push    testyy0_0123456789
+    push    ebx
+    call    _WriteFile@20
+
     jmp end_program
 
 end_program:
