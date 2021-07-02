@@ -70,23 +70,32 @@ macro_rules! non_doubling_import {
 }
 
 macro_rules! string_length_getter {
-    ($str_to_push_to:expr, $variable_name:expr) => {
+    ($str_to_push_to:expr, $variable_name:expr, $counter_counter:expr) => {
         $str_to_push_to.push_str(format!(
 "    mov edx, {var}
     push edx
     mov ecx,0
     dec edx
-    count:
+    count{counter}:
         inc ecx
         inc edx
         cmp byte[edx], 0
-        jnz count
+        jnz count{counter}
     dec ecx
     pop edx
 
-", var = format!("{}_0123456789", $variable_name)
+", var = format!("{}_0123456789", $variable_name), counter = $counter_counter
         ).as_str()
         );
+        $counter_counter += 1;
+    }
+}
+
+macro_rules! string_length_getter_reset {
+    ($str_to_push_to:expr) => {
+        $str_to_push_to.push_str(
+"pop ecx
+");
     }
 }
 
@@ -120,6 +129,9 @@ pub struct Compiler {
     windows_std_handle_input_bool: bool,
     writefile_bool: bool,
     malloc_import_bool: bool,
+
+    // to avoid repeated string count instructions
+    count_counter: i32,
 }
 
 impl Compiler {
@@ -139,6 +151,8 @@ impl Compiler {
             windows_std_handle_input_bool: false,
             writefile_bool: false,
             malloc_import_bool: false,
+
+            count_counter: 0,
         }
     }
 
@@ -230,7 +244,7 @@ impl Compiler {
                     code.push_str("db ");
                     code.push_str("'");
                     code.push_str(val);
-                    code.push_str("'");
+                    code.push_str("', 0");
                 },
                 Literal::Integer(val) => {
                     code.push_str("equ ");
@@ -279,7 +293,7 @@ impl Compiler {
 
 
             let mut code = String::from("");
-            string_length_getter!(code, variable_name);
+            string_length_getter!(code, variable_name, self.count_counter);
             std_print_function!(code, variable_name);
 
 

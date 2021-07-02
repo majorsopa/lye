@@ -1,4 +1,8 @@
 import std_print;
 
-const testyy = "Hello World!";
-print(testyy);
+const testyy0 = "Hello World!...";
+print(testyy0);
+const testyy1 = "World!...";
+print(testyy1);
+const testyy2 = "Goodbye World!...";
+print(testyy2);
