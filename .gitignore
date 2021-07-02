@@ -1,6 +1,6 @@
 /target
 Cargo.lock
 /.idea/*
-/program/intermediate/inter.exe
+/program/output/main.exe
 /program/intermediate/inter.obj
 
