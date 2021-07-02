@@ -1,7 +1,8 @@
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
-const SYMBOLS: [&str; 17] = [
+const SYMBOLS: [&str; 20] = [
+    // symbol symbols
     ":",
     ";",
     "=",
@@ -15,11 +16,19 @@ const SYMBOLS: [&str; 17] = [
     ")",
     "//",
 
+    // keywords
     "const",
+    "import",
     "let",
+    "function",
     "true",
     "false",
+    // std imports
+    "std_print",
 
+
+
+    // std
     "print",
 ];
 
@@ -49,6 +58,7 @@ impl Lexer {
     }
 
     pub fn from_file(file_path: &str) -> std::io::Result<Self> {
+        //todo buffered reader
         Ok(Self::from_text(&std::fs::read_to_string(file_path)?))
     }
 

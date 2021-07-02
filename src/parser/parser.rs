@@ -6,6 +6,12 @@ const STD: [&str; 1] = [
     "print",
 ];
 
+const DECLARATIONS: [&str; 3] = [
+    "import",
+    "const",
+    "function",
+];
+
 
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -54,6 +60,16 @@ impl Parser {
         found
     }
 
+    fn is_declaration(symbol: &Token) -> bool {
+        let mut found = false;
+        for keyword in DECLARATIONS {
+            if &Token::Symbol(keyword.parse().unwrap()) == symbol {
+                found = true;
+            }
+        }
+        found
+    }
+
 
     fn get_next_token_while(&mut self, raw_expression: &mut Vec<Token>) {
         loop {
@@ -92,10 +108,14 @@ impl Iterator for Parser {
             token_vec.push(first_token);
             self.get_next_token_while(&mut token_vec);
             expression = Ok(Expression::Call(Call::StdCall(token_vec)))
-        } else {
+        } else if Self::is_declaration(&first_token) {
             token_vec.push(first_token);
             self.get_next_token_while(&mut token_vec);
             expression = Ok(Expression::Declaration(token_vec))
+        } else /* is custom call */ {
+            token_vec.push(first_token);
+            self.get_next_token_while(&mut token_vec);
+            expression = Ok(Expression::Call(Call::CustomCall(token_vec)))
         }
 
 

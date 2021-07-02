@@ -1,7 +1,7 @@
 #![feature(exact_size_is_empty)]
 
 use crate::lexer::{Lexer, Token};
-use crate::parser::{Parser, Expression};
+use crate::parser::{Parser, Expression, Call};
 use crate::expression_splitter::ExpressionSplitter;
 use crate::compiler::Compiler;
 use std::path::Path;
@@ -46,30 +46,57 @@ fn main() {
 
 
     let mut constants: Vec<Vec<Expression>> = Vec::new();
+    let mut imports: Vec<Vec<Expression>> = Vec::new();
+    let mut instructions: Vec<Vec<Expression>> = Vec::new();
     for vec_of_expressions in &expression_vec {
         // 0 is the type of expression
         match vec_of_expressions.get(0).unwrap() {
-            Expression::Declaration(expr) if match expr.get(0).unwrap() {
-                Token::Symbol(value) if Token::Symbol(value.clone()) == Token::Symbol("const".parse().unwrap()) => true,
-                _ => false,
-            } => constants.push(vec_of_expressions.to_vec()),
+            Expression::Declaration(expr) => match expr.get(0).unwrap() {
+                Token::Symbol(value) => match value.as_str() {
+                    "const" => constants.push(vec_of_expressions.to_vec()),
+                    "import" => imports.push(vec_of_expressions.to_vec()),
+                    _ => {}
+                },
+                _ => {}
+            },
+            Expression::Call(call) => match call {
+                Call::StdCall(_) => instructions.push(vec_of_expressions.to_vec()),
+                Call::CustomCall(_) => {}
+            }
             _ => {},
         }
     }
 
+
+    // make the intermediate file
     let intermediate_asm_dir_path = Path::new(intermediate_asm_file.as_str());
     if !intermediate_asm_dir_path.exists() {
         create_dir(intermediate_asm_dir).unwrap();
         File::create(intermediate_asm_file.clone()).unwrap();
     }
+
     let mut compiler = Compiler::new(expression_vec, intermediate_asm_dir_path);
+
+
+    // extern imports
+    for import in imports {
+        compiler.add_import(import);
+    }
+    // boilerplate declaring linker entry etc
     compiler.do_boilerplate();
+    // declare the text section and program start
     compiler.do_text_section();
-    // add instructions
-    //compiler.add_asm();
+    // add the instructions
+    for instruction in instructions {
+        compiler.add_instruction(instruction);
+    }
+    // add jump to end_program
+    compiler.do_jmp_end_program();
+    // gracefully end the program
     compiler.do_end_program();
+    // make constants (i do it at the end, i do not know why but i like it here better)
     compiler.do_data_section();
     for constant_expression in constants {
-        compiler.add_constants(constant_expression);
+        compiler.add_constant(constant_expression);
     }
 }

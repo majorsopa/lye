@@ -1,1 +1,4 @@
-const test = "hello world";
+import std_print;
+
+const testyy = "Hello World!";
+print(testyy);
