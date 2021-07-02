@@ -19,12 +19,13 @@ const SYMBOLS: [&str; 20] = [
     // keywords
     "const",
     "import",
-    "let",
     "function",
-    "true",
-    "false",
+    "let",
     // std imports
     "std_print",
+    // bools
+    "true",
+    "false",
 
 
 
