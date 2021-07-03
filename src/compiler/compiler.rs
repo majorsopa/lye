@@ -40,14 +40,14 @@ Start:
 ";
 
 const END_PROGRAM_JMP: &str =
-"    jmp end_program
+"    jmp    end_program
 
 ";
 
 const END_PROGRAM_ASM: &str =
 "end_program:
-    push 0
-    call _ExitProcess@4
+    push    0
+    call    _ExitProcess@4
 
 ";
 
@@ -69,55 +69,114 @@ macro_rules! non_doubling_import {
     }
 }
 
-macro_rules! string_length_getter {
-    ($str_to_push_to:expr, $variable_name:expr, $counter_counter:expr) => {
+macro_rules! call_std_print_function {
+    ($str_to_push_to:expr, $variable_name:expr) => {
         $str_to_push_to.push_str(format!(
-"    mov edx, {var}
-    push edx
-    mov ecx,0
-    dec edx
-    count{counter}:
-        inc ecx
-        inc edx
-        cmp byte[edx], 0
-        jnz count{counter}
-    dec ecx
-    pop edx
-
-", var = format!("{}_0123456789", $variable_name), counter = $counter_counter
+"    push {var}
+    call std_print_function
+    pop ecx
+", var = format!("{}_0123456789", $variable_name)
         ).as_str()
         );
-        $counter_counter += 1;
     }
 }
 
-macro_rules! string_length_getter_reset {
-    ($str_to_push_to:expr) => {
-        $str_to_push_to.push_str(
-"pop ecx
-");
+macro_rules! std_string_length_getter {
+    ($str_to_push_to:expr, $variable_name:expr, $counter_counter:expr, $function_bool:expr) => {
+        if !$function_bool {
+            $str_to_push_to.push_str(format!(
+"std_string_length_getter:
+    push    edx
+
+    xor     ecx, ecx
+    dec     edx
+    count{counter}:
+        inc     ecx
+        inc     edx
+        cmp     byte[edx],0
+        jnz     count{counter}
+    dec     ecx
+
+    pop     edx
+    ret
+
+", counter = $counter_counter
+        ).as_str()
+        );
+        $counter_counter += 1;
+        $function_bool = true;
+        }
     }
 }
 
 macro_rules! std_print_function {
-    ($str_to_push_to:expr, $variable_name:expr) => {
-        $str_to_push_to.push_str(format!(
-"    push    -11
+    ($str_to_push_to:expr, $variable_name:expr, $counter_counter:expr, $function_bool:expr, $string_len_getter_bool:expr) => {
+        if !$function_bool {
+            $str_to_push_to.push_str(
+"std_print_function:
+    push    ebp
+    mov     ebp, esp
+    and     esp, 0xfffffff0
+    mov     edx, [ebp+8]
+
+    push    -11
     call    _GetStdHandle@4
     mov     ebx, eax
 
     push    0
     lea     eax, [ebp-4]
     push    eax
+
+    call    std_string_length_getter
     push    ecx
-    push    {var}
+
+    push    edx
     push    ebx
     call    _WriteFile@20
-", var = format!("{}_0123456789", $variable_name)
-        ).as_str()
+
+
+    mov     esp, ebp
+    pop     ebp
+    ret
+
+"
         );
+            std_string_length_getter!($str_to_push_to, $variable_name, $counter_counter, $string_len_getter_bool);
+            $function_bool = true;
+        }
     }
 }
+
+
+macro_rules! get_function_name {
+    ($expression_vec:expr) => {
+        match $expression_vec.get(0) {
+
+            Some(expr) => match expr {
+                Expression::Call(call) => match call {
+                    Call::StdCall(std_call) => std_call,
+                    Call::CustomCall(custom_call) => custom_call,
+                },
+                _ => panic!("something else passed to add_function method.")
+            },
+            None => panic!("function compilation failed"),
+        };
+    }
+}
+
+macro_rules! get_variable_name {
+    ($token_vec:expr) => {
+        match $token_vec.get(2)
+                .expect("please pass an argument to your function.") {
+                Token::Literal(var_name) => match var_name {
+                    Literal::Str(val) => val,
+                    Literal::Integer(_) => panic!("pass a string.")
+                },
+                _ => panic!("probably using a taken keyword as a variable name."),
+            };
+    }
+}
+
 
 
 
@@ -130,8 +189,11 @@ pub struct Compiler {
     writefile_bool: bool,
     malloc_import_bool: bool,
 
+    count_counter: u32,
+
     // to avoid repeated string count instructions
-    count_counter: i32,
+    std_print_function_bool: bool,
+    std_string_length_getter_bool: bool,
 }
 
 impl Compiler {
@@ -153,6 +215,9 @@ impl Compiler {
             malloc_import_bool: false,
 
             count_counter: 0,
+
+            std_print_function_bool: false,
+            std_string_length_getter_bool: false,
         }
     }
 
@@ -241,9 +306,9 @@ impl Compiler {
             match cont_value_literal {
                 Literal::Str(val) => {
                     code.push_str("db ");
-                    code.push_str("'");
+                    code.push_str("`");
                     code.push_str(val);
-                    code.push_str("', 0");
+                    code.push_str("`, 0");
                 },
                 Literal::Integer(val) => {
                     code.push_str("equ ");
@@ -260,44 +325,51 @@ impl Compiler {
         // will have this be recursive so you have define custom functions
 
 
-        // 0 is the index of the function token
-        let function = match expression_vec.get(0) {
+        let function = get_function_name!(expression_vec);
 
 
-            Some(expr) => match expr {
-                Expression::Call(call) => match call {
-                    Call::StdCall(std_call) => std_call,
-                    Call::CustomCall(custom_call) => custom_call,
-                },
-                _ => panic!("something else passed to add_instruction method.")
-            },
-            None => panic!("function compilation failed"),
-        };
-
-
-        if match function.get(0).unwrap() {
+        match match function.get(0).unwrap() {
             Token::Symbol(function_name) => function_name,
             _ => panic!("something else passed to add_instruction method."),
-        } == "print" {
-
-            // index 2 is the value contained in the parentheses
-            let variable_name = match function.get(2)
-                .expect("please pass an argument to your function.") {
-                Token::Literal(var_name) => match var_name {
-                    Literal::Str(val) => val,
-                    Literal::Integer(_) => panic!("pass a string to print.")
-                },
-                _ => panic!("probably using a taken keyword as a variable name."),
-            };
+        }.as_str() {
+            "print" => {
+                // index 2 is the value contained in the parentheses
+                let variable_name = get_variable_name!(function);
 
 
-            let mut code = String::from("");
-            string_length_getter!(code, variable_name, self.count_counter);
-            std_print_function!(code, variable_name);
+                let mut code = String::from("");
+                call_std_print_function!(code, variable_name);
 
 
-            code.push('\n');
-            self.file.write_all(code.as_bytes()).expect("Failed to write code to file.");
+                code.push('\n');
+                self.file.write_all(code.as_bytes()).expect("Failed to write code to file.");
+            },
+            _ => panic!("not a method.")
+        }
+    }
+
+    pub fn add_function(&mut self, expression_vec: Vec<Expression>) {
+
+        let function = get_function_name!(expression_vec);
+
+
+        match match function.get(0).unwrap() {
+            Token::Symbol(function_name) => function_name,
+            _ => panic!("something else passed to add_function method."),
+        }.as_str() {
+              "print" => {
+                // index 2 is the value contained in the parentheses
+                let variable_name = get_variable_name!(function);
+
+
+                let mut code = String::from("");
+                std_print_function!(code, variable_name, self.count_counter, self.std_print_function_bool, self.std_string_length_getter_bool);
+
+
+                code.push('\n');
+                self.file.write_all(code.as_bytes()).expect("Failed to write code to file.");
+            },
+            _ => panic!("not a method.")
         }
     }
 }

@@ -87,11 +87,15 @@ fn main() {
     // declare the text section and program start
     compiler.do_text_section();
     // add the instructions
-    for instruction in instructions {
+    for instruction in instructions.clone() {
         compiler.add_instruction(instruction);
     }
     // add jump to end_program
     compiler.do_jmp_end_program();
+    // add the functions
+    for function in instructions {
+        compiler.add_function(function);
+    };
     // gracefully end the program
     compiler.do_end_program();
     // make constants (i do it at the end, i do not know why but i like it here better)
