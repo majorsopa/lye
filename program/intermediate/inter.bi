@@ -49,11 +49,11 @@ std_string_length_getter:
 
     xor     ecx, ecx
     dec     edx
-    count0:
+    count:
         inc     ecx
         inc     edx
         cmp     byte[edx],0
-        jnz     count0
+        jnz     count
     dec     ecx
 
     pop     edx
@@ -66,5 +66,5 @@ end_program:
     call    _ExitProcess@4
 
 section .data
-    testyy0_0123456789 db `Hello World!\n`, 0
+    testyy0_0123456789 db `hi there world\n`, 0
     testyy1_0123456789 db `Goodbye World!`, 0

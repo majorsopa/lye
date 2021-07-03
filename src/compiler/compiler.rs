@@ -82,35 +82,33 @@ macro_rules! call_std_print_function {
 }
 
 macro_rules! std_string_length_getter {
-    ($str_to_push_to:expr, $variable_name:expr, $counter_counter:expr, $function_bool:expr) => {
+    ($str_to_push_to:expr, $variable_name:expr, $function_bool:expr) => {
         if !$function_bool {
-            $str_to_push_to.push_str(format!(
+            $str_to_push_to.push_str(
 "std_string_length_getter:
     push    edx
 
     xor     ecx, ecx
     dec     edx
-    count{counter}:
+    count:
         inc     ecx
         inc     edx
         cmp     byte[edx],0
-        jnz     count{counter}
+        jnz     count
     dec     ecx
 
     pop     edx
     ret
 
-", counter = $counter_counter
-        ).as_str()
+"
         );
-        $counter_counter += 1;
         $function_bool = true;
         }
     }
 }
 
 macro_rules! std_print_function {
-    ($str_to_push_to:expr, $variable_name:expr, $counter_counter:expr, $function_bool:expr, $string_len_getter_bool:expr) => {
+    ($str_to_push_to:expr, $variable_name:expr, $function_bool:expr, $string_len_getter_bool:expr) => {
         if !$function_bool {
             $str_to_push_to.push_str(
 "std_print_function:
@@ -141,7 +139,7 @@ macro_rules! std_print_function {
 
 "
         );
-            std_string_length_getter!($str_to_push_to, $variable_name, $counter_counter, $string_len_getter_bool);
+            std_string_length_getter!($str_to_push_to, $variable_name, $string_len_getter_bool);
             $function_bool = true;
         }
     }
@@ -189,8 +187,6 @@ pub struct Compiler {
     writefile_bool: bool,
     malloc_import_bool: bool,
 
-    count_counter: u32,
-
     // to avoid repeated string count instructions
     std_print_function_bool: bool,
     std_string_length_getter_bool: bool,
@@ -213,8 +209,6 @@ impl Compiler {
             windows_std_handle_input_bool: false,
             writefile_bool: false,
             malloc_import_bool: false,
-
-            count_counter: 0,
 
             std_print_function_bool: false,
             std_string_length_getter_bool: false,
@@ -254,7 +248,7 @@ impl Compiler {
 
         // index 1 to get the import name
         match import.get(1).unwrap() {
-            Token::Symbol(in_import) if in_import == "std_print" => {
+            Token::Symbol(in_import) if in_import == "print" => {
                 non_doubling_import!(code, WINDOWS_STD_HANDLE_IMPORT, self.windows_std_handle_input_bool);
                 non_doubling_import!(code, WRITEFILE, self.writefile_bool);
             },
@@ -306,7 +300,7 @@ impl Compiler {
             match cont_value_literal {
                 Literal::Str(val) => {
                     code.push_str("db ");
-                    code.push_str("`");
+                    code.push('`');
                     code.push_str(val);
                     code.push_str("`, 0");
                 },
@@ -363,7 +357,7 @@ impl Compiler {
 
 
                 let mut code = String::from("");
-                std_print_function!(code, variable_name, self.count_counter, self.std_print_function_bool, self.std_string_length_getter_bool);
+                std_print_function!(code, variable_name, self.std_print_function_bool, self.std_string_length_getter_bool);
 
 
                 code.push('\n');

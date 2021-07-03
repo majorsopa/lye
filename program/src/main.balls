@@ -1,7 +1,6 @@
-import std_print;
+import print;
 
-
-const testyy0 = "Hello World!\n";
+const testyy0 = "hi there world\n";
 print(testyy0);
 
 const testyy1 = "Goodbye World!";
