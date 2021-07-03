@@ -301,7 +301,9 @@ impl Compiler {
                 Literal::Str(val) => {
                     code.push_str("db ");
                     code.push('`');
-                    code.push_str(val);
+                    let mut new_val = val.replace('\r', "");
+                    new_val = new_val.replace('\n', "\\n");
+                    code.push_str(new_val.as_str());
                     code.push_str("`, 0");
                 },
                 Literal::Integer(val) => {

@@ -66,5 +66,5 @@ end_program:
     call    _ExitProcess@4
 
 section .data
-    testyy0_0123456789 db `hi there world\n`, 0
+    testyy0_0123456789 db `hi there world\n\n\nhello\n\nbruh\n1\n\n`, 0
     testyy1_0123456789 db `Goodbye World!`, 0
