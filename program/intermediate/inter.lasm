@@ -8,11 +8,7 @@ global Start
 section .text
 
 Start:
-    push testyy0_0123456789
-    call std_print_function
-    pop ecx
-
-    push testyy1_0123456789
+    push hello_world_0123456789
     call std_print_function
     pop ecx
 
@@ -60,11 +56,9 @@ std_string_length_getter:
     ret
 
 
-
 end_program:
     push    0
     call    _ExitProcess@4
 
 section .data
-    testyy0_0123456789 db `hi there world\n\n\nhello\n\nbruh\n1\n\n`, 0
-    testyy1_0123456789 db `Goodbye World!`, 0
+    hello_world_0123456789 db `Hello World!`, 0

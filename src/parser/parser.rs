@@ -43,7 +43,7 @@ impl Parser {
         for expression in self {
             match expression {
                 Ok(expr) => ret_expressions.push(expr),
-                Err(e) => panic!("{}", e),
+                Err(_) => {},
             }
         }
         ret_expressions
@@ -92,14 +92,7 @@ impl Iterator for Parser {
 
         let first_token: Token;
         match self.tokens.next() {
-            Some(t) => match t {
-                Token::Symbol(s) => first_token = Token::Symbol(s),
-                Token::Literal(l) => first_token = Token::Literal(l),
-                Token::Error(_) => {
-                    //todo error messages
-                    panic!()
-                },
-            },
+            Some(t) => first_token = t,
             None => return None,
         }
 

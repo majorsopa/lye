@@ -35,8 +35,6 @@ const SYMBOLS: [&str; 19] = [
 pub enum Token {
     Literal(Literal),
     Symbol(String),
-
-    Error(String),
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -66,7 +64,7 @@ impl Lexer {
         for token in self {
             match token {
                 Ok(t) => ret_token_vec.push(t),
-                Err(e) => ret_token_vec.push(Token::Error(e)),
+                Err(e) => panic!("something weird passed to the token producer."),
             }
         }
         ret_token_vec

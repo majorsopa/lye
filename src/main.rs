@@ -1,6 +1,6 @@
 #![feature(exact_size_is_empty)]
 
-use crate::lexer::{Lexer, Token};
+use crate::lexer::{Lexer, Token, Literal};
 use crate::parser::{Parser, Expression, Call};
 use crate::expression_splitter::ExpressionSplitter;
 use crate::compiler::Compiler;
@@ -20,15 +20,26 @@ mod compiler;
 #[path= "compiler/runner.rs"]
 mod runner;
 
-const SOURCE_EXTENSION: &str = "balls"; // funny haha
-const INTERMEDIATE_EXTENSION: &str = "bi"; // balls intermediate
-
+const SOURCE_EXTENSION: &str = "lye";
+const INTERMEDIATE_EXTENSION: &str = "lasm";
 
 fn main() {
     let program_dir = "./program/";
-    let filename = program_dir.to_owned() + "src/main." + SOURCE_EXTENSION;
+
+    let file_dir = program_dir.to_owned() + "src/";
+    let filename = file_dir.clone() + "main." + SOURCE_EXTENSION;
+
     let intermediate_asm_dir = program_dir.to_owned() + "intermediate/";
     let intermediate_asm_file = intermediate_asm_dir.clone() + "inter." + INTERMEDIATE_EXTENSION;
+
+
+    let source_file_path = Path::new(filename.as_str());
+    if !source_file_path.exists() {
+        //File::create(source_file_path).unwrap();
+        panic!("No source file! A source file is located in `<workspace>/src/main.lye`")
+    }
+
+
 
     let tokens = Lexer::from_file(&*filename).unwrap().produce_tokens();
     let expression_splitter = ExpressionSplitter::from_vec(tokens);
@@ -61,7 +72,7 @@ fn main() {
             },
             Expression::Call(call) => match call {
                 Call::StdCall(_) => instructions.push(vec_of_expressions.to_vec()),
-                Call::CustomCall(_) => {}
+                Call::CustomCall(e) => panic!("unrecognized token: {:?}", e.get(0))
             }
             _ => {},
         }
@@ -71,7 +82,6 @@ fn main() {
     // make the intermediate file
     let intermediate_asm_dir_path = Path::new(intermediate_asm_file.as_str());
     if !intermediate_asm_dir_path.exists() {
-        create_dir(intermediate_asm_dir).unwrap();
         File::create(intermediate_asm_file.clone()).unwrap();
     }
 
