@@ -3,4 +3,3 @@ Cargo.lock
 /.idea/*
 /program/output/main.exe
 /program/intermediate/inter.obj
-
