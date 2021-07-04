@@ -22,5 +22,5 @@ compilation instructions will follow suit.
 
 - [ ] code examples
 - [ ] some documentation of the standard library and syntax
-- [ ] installer with ballslang compiler, nasm, and golink
+- [ ] installer with lye-lang compiler, nasm, and golink
 - [ ] command-line arguments instead of hardcoded values
