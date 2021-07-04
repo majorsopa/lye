@@ -14,7 +14,7 @@ impl ExpressionSplitter {
             loop {
                 match tokens_iter.next() {
                     Some(t) if t != &Token::Symbol(";".parse().unwrap()) => in_vec.push(t.clone()),
-                    Some(t) if t == &Token::Symbol(";".parse().unwrap()) => break, // if it is a semi, break
+                    Some(t_) => break, // if it is a semi, break
                     _ => panic!("probably missing a semi."),
                 }
             }
