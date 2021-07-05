@@ -57,6 +57,7 @@ fn main() {
 
 
     let mut constants: Vec<Vec<Expression>> = Vec::new();
+    let mut mutables: Vec<Vec<Expression>> = Vec::new();
     let mut imports: Vec<Vec<Expression>> = Vec::new();
     let mut instructions: Vec<Vec<Expression>> = Vec::new();
     for vec_of_expressions in &expression_vec {
@@ -65,6 +66,7 @@ fn main() {
             Expression::Declaration(expr) => match expr.get(0).unwrap() {
                 Token::Symbol(value) => match value.as_str() {
                     "const" => constants.push(vec_of_expressions.to_vec()),
+                    "mutable" => mutables.push(vec_of_expressions.to_vec()),
                     "import" => imports.push(vec_of_expressions.to_vec()),
                     _ => {}
                 },
@@ -112,5 +114,10 @@ fn main() {
     compiler.do_data_section();
     for constant_expression in constants {
         compiler.add_constant(constant_expression);
+    }
+    // allocate space for mutable variables
+    compiler.do_bss_section();
+    for mutable_expression in mutables {
+        compiler.add_mutable(mutable_expression);
     }
 }

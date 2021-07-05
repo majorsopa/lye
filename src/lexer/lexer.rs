@@ -20,7 +20,7 @@ const SYMBOLS: [&str; 19] = [
     "const",
     "import",
     "function",
-    "mut",
+    "mutable",
     // bools
     "true",
     "false",

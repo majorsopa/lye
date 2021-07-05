@@ -9,7 +9,7 @@ const STD: [&str; 1] = [
 const DECLARATIONS: [&str; 3] = [
     "import",
     "const",
-    "function",
+    "mutable",
 ];
 
 

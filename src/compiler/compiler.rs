@@ -13,9 +13,6 @@ const NASM_IMPORT: &str =
 
 
 // imports
-const MALLOC_IMPORT: &str =
-"malloc";
-
 const WINDOWS_STD_HANDLE_IMPORT: &str =
 "_GetStdHandle@4";
 
@@ -53,6 +50,11 @@ const END_PROGRAM_ASM: &str =
 
 const DATA_SECTION_ASM: &str =
 "section .data
+
+";
+
+const BSS_SECTION_ASM: &str =
+"section .bss
 ";
 
 
@@ -93,7 +95,7 @@ macro_rules! std_string_length_getter {
     count:
         inc     ecx
         inc     edx
-        cmp     byte[edx],0
+        cmp     byte[edx], 0
         jnz     count
     dec     ecx
 
@@ -185,7 +187,6 @@ pub struct Compiler {
     // bools so double imports don't happen
     windows_std_handle_input_bool: bool,
     writefile_bool: bool,
-    malloc_import_bool: bool,
 
     // to avoid repeated string count instructions
     std_print_function_bool: bool,
@@ -208,7 +209,6 @@ impl Compiler {
 
             windows_std_handle_input_bool: false,
             writefile_bool: false,
-            malloc_import_bool: false,
 
             std_print_function_bool: false,
             std_string_length_getter_bool: false,
@@ -235,6 +235,10 @@ impl Compiler {
 
     pub fn do_data_section(&mut self) {
         self.file.write_all(DATA_SECTION_ASM.as_bytes()).expect("Failed to write data section to file.");
+    }
+
+    pub fn do_bss_section(&mut self) {
+        self.file.write_all(BSS_SECTION_ASM.as_bytes()).expect("Failed to write bss section to file.");
     }
 
 
@@ -268,7 +272,7 @@ impl Compiler {
             _ => panic!("something else passed to add_constant method.")
         };
 
-        // index 1 to get the variable name
+        // index 1 to get the constant name
         match expression.get(1).unwrap() {
             Token::Literal(Literal::Str(name)) => {
                 code.push_str(&*format!("{}_0123456789 ", name));
@@ -317,10 +321,58 @@ impl Compiler {
         self.file.write_all(code.as_bytes()).expect("Failed to write constant to file.");
     }
 
+    pub fn add_mutable(&mut self, expression_vec: Vec<Expression>) {
+        // 4 spaces for a tab in
+        let mut code: String = String::from("    ");
+        let expression = match expression_vec.get(0).unwrap() {
+            Expression::Declaration(var) if var.get(0).unwrap() ==
+                &Token::Symbol("mutable".parse().unwrap()) => var,
+            _ => panic!("something else passed to add_mutable method.")
+        };
+
+        // index 1 to get the constant name
+        //todo make this a macro because it is in constant method as well
+        match expression.get(1).unwrap() {
+            Token::Literal(Literal::Str(name)) => {
+                code.push_str(&*format!("{}_0123456789", name));
+            },
+            _ => panic!("incorrect mutable syntax."),
+        }
+
+        code.push_str(": ");
+
+        // index 3 to get the value
+        match match expression.get(3).expect("incorrect mutable syntax.") {
+            Token::Literal(val) => val,
+            _ => panic!("incorrect mutable syntax."),
+        } {
+            Literal::Integer(in_int) => {
+                match in_int {
+                    1 => {
+                        code.push_str("resb ");
+                        code.push('1');
+                    },
+                    2 => {
+                        code.push_str("resw ");
+                        code.push('2');
+                    },
+                    4 => {
+                        code.push_str("resd ");
+                        code.push('4');
+                    },
+                    _ if in_int > &4 => panic!("as this is a 32-bit language, you cannot allocate more than 4 bytes per variable (for now)"),
+                    _ => panic!("1, 2, and 4 bytes are what you can allocate for now.")
+                }
+            }
+            _ => panic!("incorrect mutable syntax."),
+        };
+
+        code.push('\n');
+        self.file.write_all(code.as_bytes()).expect("Failed to write mutable to file.");
+    }
+
+
     pub fn add_instruction(&mut self, expression_vec: Vec<Expression>) {
-        // will have this be recursive so you have define custom functions
-
-
         let function = get_function_name!(expression_vec);
 
 
