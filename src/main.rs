@@ -36,7 +36,7 @@ fn main() {
     let source_file_path = Path::new(filename.as_str());
     if !source_file_path.exists() {
         //File::create(source_file_path).unwrap();
-        panic!("No source file! A source file is located in `<workspace>/src/main.{}`", SOURCE_EXTENSION)
+        panic!("No source file! A source file should be located in `<workspace>/src/main.{}`", SOURCE_EXTENSION)
     }
 
 
