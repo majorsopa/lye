@@ -6,16 +6,17 @@ const STD: [&str; 1] = [
     "print",
 ];
 
-const DECLARATIONS: [&str; 3] = [
+const DECLARATIONS: [&str; 4] = [
     "import",
     "const",
     "mutable",
+    "let",
 ];
 
 
 #[derive(Debug, Clone)]
 pub enum Expression {
-    Declaration(Vec<Token>),
+    Declaration((Vec<Token>, u64)),
 
     // still could be an error
     Call(Call),
@@ -23,18 +24,20 @@ pub enum Expression {
 
 #[derive(Debug, Clone)]
 pub enum Call {
-    StdCall(Vec<Token>),
-    CustomCall(Vec<Token>),
+    StdCall((Vec<Token>, u64)),
+    CustomCall((Vec<Token>, u64)),
 }
 
 pub struct Parser {
     tokens: Peekable<IntoIter<Token>>,
+    line: u64,
 }
 
 impl Parser {
     pub fn from_vec(token_vec: Vec<Token>) -> Self {
         Parser {
             tokens: token_vec.into_iter().peekable(),
+            line: 0,
         }
     }
 
@@ -100,17 +103,18 @@ impl Iterator for Parser {
         if Self::is_std_call(&first_token) {
             token_vec.push(first_token);
             self.get_next_token_while(&mut token_vec);
-            expression = Ok(Expression::Call(Call::StdCall(token_vec)))
+            expression = Ok(Expression::Call(Call::StdCall((token_vec, self.line))))
         } else if Self::is_declaration(&first_token) {
             token_vec.push(first_token);
             self.get_next_token_while(&mut token_vec);
-            expression = Ok(Expression::Declaration(token_vec))
+            expression = Ok(Expression::Declaration((token_vec, self.line)))
         } else /* is custom call */ {
             token_vec.push(first_token);
             self.get_next_token_while(&mut token_vec);
-            expression = Ok(Expression::Call(Call::CustomCall(token_vec)))
+            expression = Ok(Expression::Call(Call::CustomCall((token_vec, self.line))))
         }
 
+        self.line += 1;
 
         Some(expression)
     }

@@ -1,8 +1,9 @@
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
-const SYMBOLS: [&str; 19] = [
+const SYMBOLS: [&str; 24] = [
     // symbol symbols
+    ",",
     ":",
     ";",
     "=",
@@ -21,6 +22,10 @@ const SYMBOLS: [&str; 19] = [
     "import",
     "function",
     "mutable",
+    "let",
+    "resb",
+    "resw",
+    "resd",
     // bools
     "true",
     "false",
@@ -64,7 +69,7 @@ impl Lexer {
         for token in self {
             match token {
                 Ok(t) => ret_token_vec.push(t),
-                Err(e) => panic!("something weird passed to the token producer."),
+                Err(e) => panic!("something weird passed to the token producer: {}.", e),
             }
         }
         ret_token_vec

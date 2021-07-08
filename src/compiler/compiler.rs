@@ -1,11 +1,8 @@
 use crate::parser::{Expression, Call};
-use std::iter::Peekable;
-use std::vec::IntoIter;
 use std::fs::File;
 use std::path::Path;
 use std::io::Write;
 use crate::lexer::{Token, Literal};
-
 
 
 const NASM_IMPORT: &str =
@@ -149,24 +146,19 @@ macro_rules! std_print_function {
 
 
 macro_rules! get_function_name {
-    ($expression_vec:expr) => {
-        match $expression_vec.get(0) {
+    ($expression:expr) => {
+        match $expression.get(0).unwrap() {
 
-            Some(expr) => match expr {
-                Expression::Call(call) => match call {
-                    Call::StdCall(std_call) => std_call,
-                    Call::CustomCall(custom_call) => custom_call,
-                },
-                _ => panic!("something else passed to add_function method.")
-            },
-            None => panic!("function compilation failed"),
+            Token::Symbol(symbol) => symbol,
+
+            _ => panic!("error with getting function name."),
         };
     }
 }
 
 macro_rules! get_variable_name {
-    ($token_vec:expr) => {
-        match $token_vec.get(2)
+    ($token_vec:expr, $vec_index:expr) => {
+        match $token_vec.get($vec_index)
                 .expect("please pass an argument to your function.") {
                 Token::Literal(var_name) => match var_name {
                     Literal::Str(val) => val,
@@ -177,11 +169,22 @@ macro_rules! get_variable_name {
     }
 }
 
+macro_rules! get_expression {
+    ($expression:expr) => {
+        match $expression {
+            Expression::Declaration(decl_vec) => decl_vec.0,
+            Expression::Call(call) => match call {
+                Call::StdCall(my_call) => my_call.0,
+                Call::CustomCall(my_call) => my_call.0,
+            }
+        }
+    }
+}
+
 
 
 
 pub struct Compiler {
-    expressions: Peekable<IntoIter<Peekable<IntoIter<Expression>>>>,
     file: File,
 
     // bools so double imports don't happen
@@ -204,7 +207,6 @@ impl Compiler {
         }
 
         Compiler {
-            expressions: ret_vec.into_iter().peekable(),
             file: output_file,
 
             windows_std_handle_input_bool: false,
@@ -242,16 +244,16 @@ impl Compiler {
     }
 
 
-    pub fn add_import(&mut self, expression_vec: Vec<Expression>) {
+    pub fn add_import(&mut self, expression: Expression) {
         let mut code: String = String::from("");
-        let import = match expression_vec.get(0).unwrap() {
-            Expression::Declaration(var) if var.get(0).unwrap() ==
+        let import = match expression {
+            Expression::Declaration(var) if var.0.get(0).unwrap() ==
                 &Token::Symbol("import".parse().unwrap()) => var,
             _ => panic!("something else passed to add_import method.")
         };
 
         // index 1 to get the import name
-        match import.get(1).unwrap() {
+        match import.0.get(1).unwrap() {
             Token::Symbol(in_import) if in_import == "print" => {
                 non_doubling_import!(code, WINDOWS_STD_HANDLE_IMPORT, self.windows_std_handle_input_bool);
                 non_doubling_import!(code, WRITEFILE, self.writefile_bool);
@@ -263,14 +265,11 @@ impl Compiler {
         self.file.write_all(code.as_bytes()).expect("Failed to write import to file.");
     }
 
-    pub fn add_constant(&mut self, expression_vec: Vec<Expression>) {
+    pub fn add_constant(&mut self, expression: Expression) {
         // 4 spaces for a tab in
         let mut code: String = String::from("    ");
-        let expression = match expression_vec.get(0).unwrap() {
-            Expression::Declaration(var) if var.get(0).unwrap() ==
-                &Token::Symbol("const".parse().unwrap()) => var,
-            _ => panic!("something else passed to add_constant method.")
-        };
+
+        let expression = get_expression!(expression);
 
         // index 1 to get the constant name
         match expression.get(1).unwrap() {
@@ -285,7 +284,7 @@ impl Compiler {
         let mut cont_value_literal: &Literal = &Literal::Str("rust compiler is dumb".parse().unwrap());
 
         match expression.get(3).expect("incorrect constant syntax.") {
-            Token::Literal(val) => cont_value_literal = val,
+            Token::Literal(val) => cont_value_literal = &val,
             // 0 is false 1 is true
             Token::Symbol(val) if val == &"true".to_string() => {
                 code.push_str("equ ");
@@ -321,68 +320,40 @@ impl Compiler {
         self.file.write_all(code.as_bytes()).expect("Failed to write constant to file.");
     }
 
-    pub fn add_mutable(&mut self, expression_vec: Vec<Expression>) {
+    pub fn add_mutable(&mut self, mutable_variable: (String, String, i32)) {
         // 4 spaces for a tab in
         let mut code: String = String::from("    ");
-        let expression = match expression_vec.get(0).unwrap() {
-            Expression::Declaration(var) if var.get(0).unwrap() ==
-                &Token::Symbol("mutable".parse().unwrap()) => var,
-            _ => panic!("something else passed to add_mutable method.")
-        };
 
-        // index 1 to get the constant name
-        //todo make this a macro because it is in constant method as well
-        match expression.get(1).unwrap() {
-            Token::Literal(Literal::Str(name)) => {
-                code.push_str(&*format!("{}_0123456789", name));
-            },
-            _ => panic!("incorrect mutable syntax."),
-        }
+        // the variable name is the first in the tuple
+        code.push_str(&*mutable_variable.0);
 
         code.push_str(": ");
 
-        // index 3 to get the value
-        match match expression.get(3).expect("incorrect mutable syntax.") {
-            Token::Literal(val) => val,
-            _ => panic!("incorrect mutable syntax."),
-        } {
-            Literal::Integer(in_int) => {
-                match in_int {
-                    1 => {
-                        code.push_str("resb ");
-                        code.push('1');
-                    },
-                    2 => {
-                        code.push_str("resw ");
-                        code.push('2');
-                    },
-                    4 => {
-                        code.push_str("resd ");
-                        code.push('4');
-                    },
-                    _ if in_int > &4 => panic!("as this is a 32-bit language, you cannot allocate more than 4 bytes per variable (for now)"),
-                    _ => panic!("1, 2, and 4 bytes are what you can allocate for now.")
-                }
-            }
-            _ => panic!("incorrect mutable syntax."),
-        };
+        // size is the second in the tuple
+        code.push_str(&*mutable_variable.1);
+
+        code.push(' ');
+
+        // amount is the last in the tuple
+        code.push_str(&*mutable_variable.2.to_string());
+
 
         code.push('\n');
         self.file.write_all(code.as_bytes()).expect("Failed to write mutable to file.");
     }
 
 
-    pub fn add_instruction(&mut self, expression_vec: Vec<Expression>) {
-        let function = get_function_name!(expression_vec);
+    pub fn add_instruction(&mut self, expression: Expression, mov_size: &str) {
+        let expression = get_expression!(expression);
 
+        let function = get_function_name!(expression);
 
-        match match function.get(0).unwrap() {
-            Token::Symbol(function_name) => function_name,
-            _ => panic!("something else passed to add_instruction method."),
-        }.as_str() {
+        //println!("{:?}", function);
+
+        match function.as_str() {
             "print" => {
                 // index 2 is the value contained in the parentheses
-                let variable_name = get_variable_name!(function);
+                let variable_name = get_variable_name!(expression, 2);
 
 
                 let mut code = String::from("");
@@ -390,34 +361,47 @@ impl Compiler {
 
 
                 code.push('\n');
-                self.file.write_all(code.as_bytes()).expect("Failed to write code to file.");
+                self.file.write_all(code.as_bytes()).expect("Failed to write print code to file.");
             },
+            "let" => {
+                let mov_size = match mov_size {
+                    "resb" => "byte",
+                    "resw" => "word",
+                    "resd" => "dword",
+                    _ => panic!("error with making mutable reassignment."),
+                };
+
+                // 4 spaces for a tab in
+                let mut code: String = String::from("    ");
+
+                let mutable_variable = get_variable_name!(expression, 1);
+                let mutable_variable_value = get_variable_name!(expression, 3);
+
+                code.push_str(&*format!("mov {mov_size} [{variable}_0123456789], `{value}`", mov_size = mov_size, variable = mutable_variable, value = mutable_variable_value));
+
+
+                code.push('\n');
+                self.file.write_all(code.as_bytes()).expect("Failed to write change mutable instruction to file.");
+            }
             _ => panic!("not a method.")
         }
     }
 
-    pub fn add_function(&mut self, expression_vec: Vec<Expression>) {
+    pub fn add_function(&mut self, expression: Expression) {
+        let expression = get_expression!(expression);
 
-        let function = get_function_name!(expression_vec);
+        let func_name = get_function_name!(expression).as_str();
 
-
-        match match function.get(0).unwrap() {
-            Token::Symbol(function_name) => function_name,
-            _ => panic!("something else passed to add_function method."),
-        }.as_str() {
+        match func_name {
               "print" => {
-                // index 2 is the value contained in the parentheses
-                let variable_name = get_variable_name!(function);
+                  let mut code = String::from("");
+                  std_print_function!(code, variable_name, self.std_print_function_bool, self.std_string_length_getter_bool);
 
 
-                let mut code = String::from("");
-                std_print_function!(code, variable_name, self.std_print_function_bool, self.std_string_length_getter_bool);
-
-
-                code.push('\n');
-                self.file.write_all(code.as_bytes()).expect("Failed to write code to file.");
+                  code.push('\n');
+                  self.file.write_all(code.as_bytes()).expect("Failed to write code to file.");
             },
-            _ => panic!("not a method.")
+            _ => panic!("`{}` is not a method.", func_name),
         }
     }
 }

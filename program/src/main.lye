@@ -1,4 +1,10 @@
-//import print;
+import print;
 
 
-mutable hello_world: 1;
+mutable one(resd, 1);
+let one = "one ";
+print(one);
+
+mutable two(resd, 1);
+let two = "two ";
+print(two);
