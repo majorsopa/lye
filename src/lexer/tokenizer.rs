@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
-const SYMBOLS: [&str; 24] = [
+const SYMBOLS: [&str; 28] = [
     // symbol symbols
     ",",
     ":",
@@ -16,6 +16,10 @@ const SYMBOLS: [&str; 24] = [
     "(",
     ")",
     "//",
+    "+",
+    "-",
+    "*",
+    "/",
 
     // keywords
     "const",

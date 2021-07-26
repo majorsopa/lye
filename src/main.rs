@@ -1,6 +1,14 @@
 use std::path::Path;
+use crate::parser::ast::node::NodeId;
 
 mod lexer;
+mod parser;
+
+macro_rules! println_debug {
+    ($input:expr, $id:expr) => {
+        println!("[DEBUG {}] {:#?}", $id.to_string(), $input);
+    }
+}
 
 const SOURCE_EXTENSION: &str = "lye";
 
@@ -21,5 +29,17 @@ fn main() {
 
     let tokens = lexer::tokenizer::Tokenizer::from_file(&*filename).unwrap().produce_tokens();
 
-    println!("{:?}", tokens);
+
+    let mut tree = parser::ast::tree::Tree::new();
+
+    let root_id = tree.new_node();
+
+    for token in tokens.clone() {
+        let new_node_id = tree.new_node();
+        tree.add_leaf(root_id, new_node_id, token);
+    }
+
+
+
+    println_debug!(tree, -1)
 }
