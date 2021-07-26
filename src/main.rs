@@ -3,7 +3,7 @@
 use crate::lexer::{Lexer, Token, Literal};
 use crate::parser::{Parser, Expression, Call};
 use crate::expression_splitter::ExpressionSplitter;
-use crate::compiler::Compiler;ehknoonjkdbfgjklnbfdjknbdfknjbdfknjdknbvcj
+use crate::compiler::Compiler;
 use std::path::Path;
 use std::fs::File;
 
