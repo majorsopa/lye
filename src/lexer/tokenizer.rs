@@ -48,13 +48,13 @@ pub enum Literal {
     Integer(i32),
 }
 
-pub struct Lexer {
+pub struct Tokenizer {
     raw_data: Peekable<IntoIter<char>>,
 }
 
-impl Lexer {
+impl Tokenizer {
     pub fn from_text(text: &str) -> Self {
-        Lexer {
+        Tokenizer {
             raw_data: text.chars().collect::<Vec<_>>().into_iter().peekable(),
         }
     }
@@ -95,7 +95,7 @@ impl Lexer {
     }
 }
 
-impl Iterator for Lexer {
+impl Iterator for Tokenizer {
     type Item = Result<Token, String>;
 
     fn next(&mut self) -> Option<Self::Item> {
