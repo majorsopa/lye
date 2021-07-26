@@ -7,6 +7,7 @@ use crate::compiler::Compiler;
 use std::path::Path;
 use std::fs::File;
 
+
 //todo make error messages constants so easy to edit
 
 //todo make errors if you put random tokens in unchecked spaces.
