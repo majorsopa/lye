@@ -1,7 +1,8 @@
-use crate::parser::ast::node::{Node, NodeId, NodeType};
-use crate::lexer::tokenizer::Token;
-use std::ops::Deref;
+use crate::parser::ast::node::Node;
 use std::fmt::{Display, Formatter};
+use crate::lexer::token::Token;
+use crate::parser::ast::node_id::NodeId;
+use crate::parser::ast::node_type::NodeType;
 
 #[derive(Debug, Clone)]
 pub struct Tree {
@@ -47,21 +48,28 @@ impl Tree {
 
         let mut first = true;
         for node in tree.nodes {
-            let new_node_id = new_tree.new_node(
-                false,
-                NodeType::Token,
-                new_leaf_id,
-                node.data
-            );
-
-            new_leaf_id += 1;
-
             if !first {
+                let new_node_id = new_tree.new_node(
+                    false,
+                    NodeType::Token,
+                    new_leaf_id,
+                    node.data
+                );
+
                 // 0 is top of the vector this inner tree. it is not the id.
                 new_tree.add_leaf(0, new_node_id);
             } else {
+                let new_node_id = new_tree.new_node(
+                    false,
+                    NodeType::Expression,
+                    new_leaf_id,
+                    node.data
+                );
+
                 first = false
             }
+
+            new_leaf_id += 1;
         }
 
 
@@ -76,13 +84,17 @@ impl Tree {
 
 impl Display for Tree {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let mut final_string = String::new();
+        let mut node_vec_string = String::from("[\n");
 
-        for node in self.nodes {
-
+        for node in &self.nodes {
+            node_vec_string.push('\t');
+            node_vec_string.push_str(node.to_string().as_str())
         }
+        // get rid of the comma and newline at the end
+        node_vec_string.pop();
+        node_vec_string.push_str("\n]");
 
 
-        write!(f, "hi")
+        write!(f, "{node_vec}", node_vec = node_vec_string)
     }
 }

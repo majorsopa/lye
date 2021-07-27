@@ -1,7 +1,9 @@
 use std::iter::Peekable;
 use std::vec::IntoIter;
+use crate::lexer::literal::Literal;
+use crate::lexer::token::Token;
 
-const SYMBOLS: [&str; 28] = [
+const SYMBOLS: [&str; 25] = [
     // symbol symbols
     ",",
     ":",
@@ -27,30 +29,13 @@ const SYMBOLS: [&str; 28] = [
     "function",
     "mutable",
     "let",
-    "resb",
-    "resw",
-    "resd",
     // bools
     "true",
     "false",
 
-
-
     // std
     "print",
 ];
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum Token {
-    Literal(Literal),
-    Symbol(String),
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum Literal {
-    Str(String),
-    Integer(i32),
-}
 
 pub struct Tokenizer {
     raw_data: Peekable<IntoIter<char>>,

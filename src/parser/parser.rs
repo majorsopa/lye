@@ -1,6 +1,6 @@
 use crate::parser::ast::tree::Tree;
-use crate::lexer::tokenizer::Token;
-use crate::parser::ast::node::{NodeId, NodeType, Node};
+use crate::lexer::token::Token;
+use crate::parser::ast::node_type::NodeType;
 
 pub struct Parser {
     tokens: Box<dyn Iterator<Item=Token>>,
@@ -32,6 +32,9 @@ impl Parser {
                             open_id += 1;
 
                             let inner_tree = self.parse_tokens(0);
+                            println!("{}", inner_tree);
+
+                            open_id += inner_tree.nodes.len() - 1;
 
                             last_tree.add_tree(inner_tree, root_id);
                         },
