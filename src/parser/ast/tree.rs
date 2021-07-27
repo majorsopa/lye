@@ -1,53 +1,33 @@
-use crate::parser::ast::node::{Node, NodeId};
+use crate::parser::ast::node::{Node, NodeId, NodeType};
 use crate::lexer::tokenizer::Token;
 use std::ops::Deref;
+use std::fmt::{Display, Formatter};
 
-macro_rules! println_debug {
-    ($input:expr, $id:expr) => {
-        println!("[DEBUG {}] {:#?}", $id.to_string(), $input);
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tree {
-    nodes: Vec<Node>,
-    current_node: NodeId,
-}
-
-impl Iterator for Tree {
-    type Item = Node;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.nodes.get(self.current_node.index + 1) {
-            None => None,
-            Some(node) => {
-                self.current_node.add_value(1);
-                Some(node.clone())
-            },
-        }
-    }
+    pub(crate) nodes: Vec<Node>,
 }
 
 impl Tree {
     pub fn new() -> Self {
         Tree {
             nodes: vec![],
-            current_node: NodeId {
-                index: 0
-            }
         }
     }
 
-    pub fn new_node(&mut self) -> NodeId {
+    pub fn new_node(&mut self, root: bool, node_type: NodeType, open_node_id: usize, data: Option<Token>) -> NodeId {
         let next_open_node_id = NodeId {
-            index: self.nodes.len(),
+            index: open_node_id,
         };
 
         self.nodes.push(Node {
-            parent: None,
             children: vec![],
 
-            data: None,
+            root,
+
+            node_type,
+
+            data,
 
             id: next_open_node_id
         });
@@ -55,28 +35,54 @@ impl Tree {
         next_open_node_id
     }
 
-    pub fn add_leaf(&mut self, parent_id: NodeId, leaf_id: NodeId, data: Token) {
-        self.nodes.get_mut(parent_id.index).unwrap().add_child(leaf_id);
-
-        let leaf_node = self.nodes.get_mut(leaf_id.index).unwrap();
-
-        leaf_node.add_parent(parent_id);
-        leaf_node.set_data(data);
+    pub fn add_leaf(&mut self, parent_id: usize, leaf: NodeId) {
+        self.nodes.get_mut(parent_id).unwrap().add_child(leaf);
     }
 
     pub fn add_tree(&mut self, tree: Tree, parent: NodeId) {
-        let main_tree_size = self.nodes.len();
-        for mut node in tree {
-            node.add_id(main_tree_size);
+        let mut new_leaf_id = self.nodes.len();
+        let expr_node_id = new_leaf_id;
+        let mut new_tree = Tree::new();
+
+
+        let mut first = true;
+        for node in tree.nodes {
+            let new_node_id = new_tree.new_node(
+                false,
+                NodeType::Token,
+                new_leaf_id,
+                node.data
+            );
+
+            new_leaf_id += 1;
+
+            if !first {
+                // 0 is top of the vector this inner tree. it is not the id.
+                new_tree.add_leaf(0, new_node_id);
+            } else {
+                first = false
+            }
         }
 
-        let leaf_id = NodeId { index: main_tree_size - 1 };
 
 
-        self.nodes.get_mut(parent.index).unwrap().add_child(leaf_id);
+        self.nodes.get_mut(parent.index).unwrap().add_child(NodeId { index: expr_node_id });
 
-        let leaf_node = self.nodes.get_mut(leaf_id.index).unwrap();
+        for i in 0..new_tree.nodes.len() {
+            self.nodes.push(new_tree.nodes.get(i).unwrap().to_owned());
+        }
+    }
+}
 
-        leaf_node.add_parent(parent);
+impl Display for Tree {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut final_string = String::new();
+
+        for node in self.nodes {
+
+        }
+
+
+        write!(f, "hi")
     }
 }

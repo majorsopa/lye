@@ -1,9 +1,16 @@
 use crate::lexer::tokenizer::Token;
+use crate::parser::ast::node_id::NodeId;
+use crate::parser::ast::node_type::NodeType;
+use std::fmt::{Display, Formatter};
+
 
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub(crate) parent: Option<NodeId>,
     pub(crate) children: Vec<NodeId>,
+
+    pub(crate) root: bool,
+
+    pub(crate) node_type: NodeType,
 
     pub(crate) data: Option<Token>,
 
@@ -13,10 +20,6 @@ pub struct Node {
 impl Node {
     pub fn add_child(&mut self, child: NodeId) {
         self.children.push(child);
-    }
-
-    pub fn add_parent(&mut self, parent: NodeId) {
-        self.parent = Some(parent);
     }
 
     pub fn set_data(&mut self, token: Token) {
@@ -36,21 +39,30 @@ impl Node {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct NodeId {
-    pub(crate) index: usize,
-}
+impl Display for Node {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut root_bool_string = String::new();
+        if self.root {
+            root_bool_string.push_str("true");
+        } else {
+            root_bool_string.push_str("false");
+        }
 
-impl NodeId {
-    pub fn add_value(&mut self, amount: usize) {
-        self.index += amount;
-    }
+        let mut children_string = String::from('[');
+        for child in self.children {
+            children_string.push_str(&*format!("{}, ", child.index.to_string()))
+        }
+        // get rid of the space and comma at the end
+        children_string.pop();
+        children_string.pop();
+        children_string.push(']');
 
-    pub fn sub_value(&mut self, amount: usize) {
-        self.index -= amount;
-    }
 
-    pub fn set_value(&mut self, value: usize) {
-        self.index = value;
+        write!(
+            f,
+            "Root: {root}\nChildren: {children_vec}\n",
+            root = root_bool_string,
+            children_vec = children_string,
+        )
     }
 }

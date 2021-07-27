@@ -6,7 +6,7 @@ mod parser;
 
 macro_rules! println_debug {
     ($input:expr, $id:expr) => {
-        println!("[DEBUG {}] {:#?}", $id.to_string(), $input);
+        println!("[DEBUG {}] {}", $id.to_string(), $input);
     }
 }
 
@@ -27,19 +27,14 @@ fn main() {
     }
 
 
+
+
     let tokens = lexer::tokenizer::Tokenizer::from_file(&*filename).unwrap().produce_tokens();
 
 
-    let mut tree = parser::ast::tree::Tree::new();
 
-    let root_id = tree.new_node();
-
-    for token in tokens.clone() {
-        let new_node_id = tree.new_node();
-        tree.add_leaf(root_id, new_node_id, token);
-    }
+    let syntax_tree = parser::parser::Parser::from_tokens(tokens).parse();
 
 
-
-    println_debug!(tree, -1)
+    println_debug!(syntax_tree, -1);
 }
