@@ -42,7 +42,6 @@ impl Tree {
 
     pub fn add_tree(&mut self, tree: Tree, parent: NodeId) {
         let mut new_leaf_id = self.nodes.len();
-        let expr_node_id = new_leaf_id;
         let mut new_tree = Tree::new();
 
 
@@ -66,15 +65,13 @@ impl Tree {
                     node.data
                 );
 
+                self.nodes.get_mut(parent.index).unwrap().add_child(new_node_id);
+
                 first = false
             }
 
             new_leaf_id += 1;
         }
-
-
-
-        self.nodes.get_mut(parent.index).unwrap().add_child(NodeId { index: expr_node_id });
 
         for i in 0..new_tree.nodes.len() {
             self.nodes.push(new_tree.nodes.get(i).unwrap().to_owned());
