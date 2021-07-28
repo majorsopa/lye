@@ -1,5 +1,5 @@
 # lye
-a simple compiled language i made in rust. it uses intermediate representation (IR) instead of an abstract syntax tree (AST).
+a simple compiled language i made in rust.
 
 documentation will come once the language comes along more and things get to a solider point.
 
