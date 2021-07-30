@@ -32,8 +32,7 @@ fn main() {
         ).produce_tokens();
 
 
-
-    let syntax_tree = parser::parser::Parser::from_tokens(tokens).parse();
+    //
 
 
     // for debugging the syntax tree
@@ -42,10 +41,7 @@ fn main() {
             lye_tree_file.as_str()
         )
     ).expect("error making tree file")
-        .write_all(
-            syntax_tree
-                .to_string()
-                .as_bytes()
+        .write_all("".as_bytes()
         )
         .expect("failed to write tree to file");
 }
