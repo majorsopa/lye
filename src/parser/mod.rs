@@ -1,2 +1,3 @@
-pub mod node;
-pub mod ast;
+pub mod parser;
+
+mod node;

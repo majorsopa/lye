@@ -1,15 +1,18 @@
 use std::path::Path;
 use std::fs::File;
 use std::io::Write;
+use crate::parser::parser::Parser;
 
 mod lexer;
 mod parser;
 
-/*macro_rules! println_debug {
+
+macro_rules! println_debug {
     ($input:expr, $id:expr) => {
-        println!("[DEBUG {}] {}", $id.to_string(), $input);
+        println!("[DEBUG {}] {:#?}", $id.to_string(), $input);
     }
-}*/
+}
+
 
 const SOURCE_EXTENSION: &str = "lye";
 const DEBUG_EXTENSION: &str = "debug";
@@ -18,13 +21,17 @@ fn main() {
     // not constants so clap can be implemented
     let program_dir = "./program/";
 
-    let src_file_dir = program_dir.to_owned() + "src/";
-    let lye_src_file = src_file_dir.clone() + "main." + SOURCE_EXTENSION;
+    let lye_src_file = program_dir.to_owned() + "src/" + "main." + SOURCE_EXTENSION;
 
     let inter_file_dir = program_dir.to_owned() + "intermediate/";
-    let lye_tree_file = inter_file_dir + "ast." + DEBUG_EXTENSION;
 
 
+    {
+        let lye_src_file_path = Path::new(lye_src_file.as_str());
+        if !lye_src_file_path.exists() {
+            File::create(&lye_src_file);
+        }
+    }
 
     let tokens = lexer::tokenizer::Tokenizer::from_file(&*lye_src_file)
         .expect(
@@ -32,16 +39,8 @@ fn main() {
         ).produce_tokens();
 
 
-    //
+    let ast = Parser::new(tokens).parse();
 
 
-    // for debugging the syntax tree
-    File::create(
-        Path::new(
-            lye_tree_file.as_str()
-        )
-    ).expect("error making tree file")
-        .write_all("".as_bytes()
-        )
-        .expect("failed to write tree to file");
+    println_debug!(ast, -1);
 }
