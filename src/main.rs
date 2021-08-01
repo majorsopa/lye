@@ -42,5 +42,5 @@ fn main() {
     let ast = Parser::new(tokens).parse();
 
 
-    //println_debug!(ast, -1);
+    println_debug!(ast, -1);
 }

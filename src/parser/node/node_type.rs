@@ -2,7 +2,8 @@ use crate::lexer::token::Token;
 
 #[derive(Debug, Clone)]
 pub enum NodeType {
-    Undecided,
+    NullDebug(String), // string for debugging
+    Null,
 
     Root,
     BinaryExpression,

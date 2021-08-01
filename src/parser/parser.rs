@@ -35,13 +35,13 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Tree {
-        let mut root = Tree::new(Node::new(NodeType::Root));
-        self.parse_binary_expression(root)
+        let mut start_tree = Tree::new(Node::new(NodeType::Null));
+        //todo determine if its even a binary expression or what
+        self.parse_binary_expressions(start_tree)
     }
 
 
-    //todo determine if its even a binary expression or what
-    fn parse_binary_expression(&mut self, mut ret_tree: Tree) -> Tree {
+    fn parse_binary_expressions(&mut self, mut ret_tree: Tree) -> Tree { // returns a BinaryExpression Tree
 
         match self.tokens.peek() {
             Some(token) => match token {
@@ -87,8 +87,26 @@ impl Parser {
             // check grammar is correct
             println!("{:?}", prefix_binary_expression);
             assert!(prefix_grammar_check!(prefix_binary_expression, BINARY_OPERATORS));
+
+            let mut binary_expression_node_tree = Tree::new(
+                Node::new(NodeType::Null)
+            );
+            let mut binary_expression_tree = Tree::new(
+                Node::new(NodeType::Null)
+            );
+            binary_expression_node_tree.add_node(Box::new(Node::new(NodeType::Token(prefix_binary_expression[0].clone()))));
+            binary_expression_tree.add_node(Box::new(Node::new(NodeType::Token(prefix_binary_expression[1].clone()))));
+            binary_expression_tree.add_node(Box::new(Node::new(NodeType::Token(prefix_binary_expression[2].clone()))));
+            binary_expression_node_tree.graft(binary_expression_tree, NodeType::Null);
+            ret_tree.graft(binary_expression_node_tree, NodeType::BinaryExpression);
         }
 
-        ret_tree.clone().graft(self.parse_binary_expression(ret_tree))
+        Tree::new(
+            Node::new(NodeType::Null)
+        ).graft(
+            self.parse_binary_expressions(
+                ret_tree
+            ), NodeType::Root
+        )
     }
 }
