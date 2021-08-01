@@ -3,7 +3,7 @@ use std::vec::IntoIter;
 use crate::lexer::literal::Literal;
 use crate::lexer::token::Token;
 
-const SYMBOLS: [&str; 25] = [
+const ALL_SYMBOLS: [&str; 24] = [
     // symbol symbols
     ",",
     ":",
@@ -17,11 +17,11 @@ const SYMBOLS: [&str; 25] = [
     ">=",
     "(",
     ")",
-    "//",
     "+",
     "-",
     "*",
     "/",
+    "//",
 
     // keywords
     "const",
@@ -32,10 +32,41 @@ const SYMBOLS: [&str; 25] = [
     // bools
     "true",
     "false",
+];
 
-    // std
+pub const BINARY_OPERATORS: [&str; 11] = [
+    "=",
+    "!=",
+    "==",
+    "<",
+    ">",
+    "<=",
+    ">=",
+    "+",
+    "-",
+    "*",
+    "/",
+];
+
+pub const STD_LIB: [&str; 1] = [
     "print",
 ];
+
+pub const COMMENT_SYMBOLS: [&str; 1] = [
+    "//",
+];
+
+pub const KEYWORDS: [&str; 7] = [
+    "const",
+    "import",
+    "function",
+    "mutable",
+    "let",
+    // bools
+    "true",
+    "false",
+];
+
 
 pub struct Tokenizer {
     raw_data: Peekable<IntoIter<char>>,
@@ -70,7 +101,7 @@ impl Tokenizer {
     }
 
 
-    fn get_next_char_while(&mut self, raw_token: &mut String, cond: fn(char) -> bool) {
+    fn grab_next_char_while(&mut self, raw_token: &mut String, cond: fn(char) -> bool) {
         loop {
             match self.raw_data.peek() {
                 Some(c) if cond(*c) => {
@@ -104,16 +135,16 @@ impl Iterator for Tokenizer {
 
         if Self::is_literal(first_char) && !first_char.is_numeric() {
             let mut name = first_char.to_string();
-            self.get_next_char_while(&mut name, Self::is_literal);
+            self.grab_next_char_while(&mut name, Self::is_literal);
 
-            if SYMBOLS.contains(&&*name) {
+            if ALL_SYMBOLS.contains(&&*name) {
                 token = Ok(Token::Symbol(name));
             } else {
                 token = Ok(Token::Literal(Literal::Str(name)));
             }
         } else if first_char.is_numeric() {
             let mut value = first_char.to_string();
-            self.get_next_char_while(&mut value, |c| c.is_numeric());
+            self.grab_next_char_while(&mut value, |c| c.is_numeric());
 
             token = match value.parse() {
                 Ok(i) => Ok(Token::Literal(Literal::Integer(i))),
@@ -121,7 +152,7 @@ impl Iterator for Tokenizer {
             }
         } else if first_char == '"' {
             let mut value = String::new();
-            self.get_next_char_while(&mut value, |c| c != '"');
+            self.grab_next_char_while(&mut value, |c| c != '"');
 
             self.raw_data.next();
 
@@ -135,7 +166,7 @@ impl Iterator for Tokenizer {
                     break;
                 }
 
-                if SYMBOLS.contains(&&raw[..]) {
+                if ALL_SYMBOLS.contains(&&raw[..]) {
                     self.raw_data.next();
                 } else {
                     raw.pop();
@@ -146,11 +177,11 @@ impl Iterator for Tokenizer {
             token = match &raw[..] {
                 // comments, C-style
                 s if s == "//" => {
-                    self.get_next_char_while(&mut String::new(), |c| c != '\n');
+                    self.grab_next_char_while(&mut String::new(), |c| c != '\n');
 
                     self.next()?
                 }
-                s if SYMBOLS.contains(&s) => Ok(Token::Symbol(raw)),
+                s if ALL_SYMBOLS.contains(&s) => Ok(Token::Symbol(raw)),
                 _ => Err(format!("Unknown token: {}", raw)),
             }
         }

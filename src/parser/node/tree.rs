@@ -2,24 +2,23 @@ use std::mem;
 use crate::parser::node::node::Node;
 use crate::parser::node::node_type::NodeType;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tree {
-    root: Box<Node>,
+    pub(crate) root: Box<Node>,
 }
 
 impl Tree {
-    pub fn new(node_type: NodeType) -> Self {
-        let new_node = Box::new(Node::new(node_type));
-        Self { root: new_node }
+    pub fn new(node: Node) -> Self {
+        Self { root: Box::new(node) }
     }
 
-    pub fn add_node(&mut self, node_type: NodeType) {
-        let node_to_add = Node::new(node_type);
-        self.root.add_child(node_to_add);
+    pub fn add_node(&mut self, node_box_to_add: Box<Node>) -> Node {
+        self.root.add_child(node_box_to_add)
     }
 
-    pub fn add_list(&mut self, mut list: Self) {
-        list.root.node_type = NodeType::Parentheses;
-        self.root.add_child(*list.root);
+    pub fn graft(&mut self, mut tree: Tree) -> Tree {
+        tree.root.node_type = NodeType::BinaryExpression;
+        self.root.add_child(tree.root.clone());
+        tree
     }
 }

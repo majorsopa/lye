@@ -1,4 +1,3 @@
 pub mod tree;
 pub mod node_type;
-
-mod node;
+pub mod node;
