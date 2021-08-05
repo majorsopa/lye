@@ -16,8 +16,13 @@ impl Tree {
         self.root.add_child(node_box_to_add)
     }
 
-    pub fn graft(&mut self, mut tree: Tree, node_type: NodeType) -> Tree {
+    pub fn graft_change_type(&mut self, mut tree: Tree, node_type: NodeType) -> Tree {
         tree.root.node_type = node_type;
+        self.root.add_child(tree.root.clone());
+        tree
+    }
+
+    pub fn graft(&mut self, mut tree: Tree) -> Tree {
         self.root.add_child(tree.root.clone());
         tree
     }

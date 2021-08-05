@@ -37,21 +37,36 @@ impl Parser {
     pub fn parse(&mut self) -> Tree {
         let mut start_tree = Tree::new(Node::new(NodeType::Null));
         //todo determine if its even a binary expression or what
-        self.parse_binary_expressions(start_tree)
+        self.parse_binary_expressions(start_tree, true)
     }
 
 
-    fn parse_binary_expressions(&mut self, mut ret_tree: Tree) -> Tree { // returns a BinaryExpression Tree
+    fn parse_binary_expressions(&mut self, mut ret_tree: Tree, peek_bool: bool) -> Tree { // returns a BinaryExpression Tree
 
-        match self.tokens.peek() {
-            Some(token) => match token {
-                Token::Symbol(symbol) if symbol.as_str() == ";" => {
-                    self.tokens.next(); // consume the semicolon iterator
-                    ()
+        if peek_bool {
+            match self.tokens.peek() {
+                Some(token) => match token {
+                    Token::Symbol(symbol) => match symbol.as_str() {
+                        ";" => {
+                            self.tokens.next();
+                            ()
+                        }, // consume the semicolon token
+                        some_str if BINARY_OPERATORS.contains(&some_str) => {
+                            return Tree::new(
+                                Node::new(NodeType::Null)
+                            ).graft_change_type(
+                                self.parse_binary_expressions(
+                                    ret_tree,
+                                    false
+                                ), NodeType::BinaryExpression
+                            )
+                        },
+                        _ => {}
+                    },
+                    _ => ()
                 },
-                _ => ()
-            },
-            None => return ret_tree,
+                None => return ret_tree,
+            }
         }
 
         {
@@ -88,24 +103,23 @@ impl Parser {
             println!("{:?}", prefix_binary_expression);
             assert!(prefix_grammar_check!(prefix_binary_expression, BINARY_OPERATORS));
 
-            let mut binary_expression_node_tree = Tree::new(
-                Node::new(NodeType::Null)
-            );
-            let mut binary_expression_tree = Tree::new(
-                Node::new(NodeType::Null)
-            );
-            binary_expression_node_tree.add_node(Box::new(Node::new(NodeType::Token(prefix_binary_expression[0].clone()))));
-            binary_expression_tree.add_node(Box::new(Node::new(NodeType::Token(prefix_binary_expression[1].clone()))));
-            binary_expression_tree.add_node(Box::new(Node::new(NodeType::Token(prefix_binary_expression[2].clone()))));
-            binary_expression_node_tree.graft(binary_expression_tree, NodeType::Null);
-            ret_tree.graft(binary_expression_node_tree, NodeType::BinaryExpression);
+
+            let mut operator_node = Node::new(NodeType::Token(prefix_binary_expression[0].clone()));
+            operator_node.add_child(Box::new(Node::new(NodeType::Token(prefix_binary_expression[1].clone()))));
+            operator_node.add_child(Box::new(Node::new(NodeType::Token(prefix_binary_expression[2].clone()))));
+
+            let mut binary_expression_node_tree = Tree::new(Node::new(NodeType::BinaryExpression));
+            binary_expression_node_tree.add_node(Box::new(operator_node));
+
+            ret_tree.graft(binary_expression_node_tree);
         }
 
         Tree::new(
             Node::new(NodeType::Null)
-        ).graft(
+        ).graft_change_type(
             self.parse_binary_expressions(
-                ret_tree
+                ret_tree,
+                true
             ), NodeType::Root
         )
     }
