@@ -1,0 +1,6 @@
+alpha = { 'a'..'z' | 'A'..'Z' }
+numeric = { '0'..'9' }
+
+identifier = { (alpha | numeric)+ }
+
+identifier_list = _{ !numeric ~ identifier ~ (" " ~ identifier)+ }
