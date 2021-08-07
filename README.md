@@ -9,13 +9,12 @@ compilation instructions will follow suit.
 
 ## roadmap
 ### 1.0.0
-- [x] constants
-- [x] print statement
+- [ ] print statement
 - [ ] goto
 - [ ] while loop
 - [ ] conditional statements
 - [ ] strongly-typed mutable variables
-- [ ] strongly-typed constants (to replace the current constants)
+- [ ] strongly-typed constants
 - [ ] casting int to string and vice versa
 - [ ] importing functions from other files
 

@@ -1,6 +1,8 @@
-import print;
+/// hi
+/// hello
+;
+
+/// test;
 
 
-const hello_world = "Hello World!";
-
-print(hello_world);
+1 + 2 + (3 + 4 + (5 + 6) + 7 + (8 + 9)) + 10;

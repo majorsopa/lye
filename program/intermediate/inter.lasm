@@ -8,7 +8,13 @@ global Start
 section .text
 
 Start:
-    push hello_world_0123456789
+    mov dword [one_0123456789], `one `
+    mov dword [two_0123456789], `two `
+    push one_0123456789
+    call std_print_function
+    pop ecx
+
+    push two_0123456789
     call std_print_function
     pop ecx
 
@@ -48,7 +54,7 @@ std_string_length_getter:
     count:
         inc     ecx
         inc     edx
-        cmp     byte[edx],0
+        cmp     byte[edx], 0
         jnz     count
     dec     ecx
 
@@ -56,9 +62,13 @@ std_string_length_getter:
     ret
 
 
+
 end_program:
     push    0
     call    _ExitProcess@4
 
 section .data
-    hello_world_0123456789 db `Hello World!`, 0
+
+section .bss
+    one_0123456789: resd 1
+    two_0123456789: resd 1

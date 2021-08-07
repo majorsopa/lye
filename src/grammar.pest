@@ -1,0 +1,72 @@
+// boring stuff
+comment_symbol = _{ "///" }
+
+comment_line = _{ comment_symbol ~ (!NEWLINE ~ ANY)* }
+COMMENT = _{ comment_line }
+WHITESPACE = _{ (" " | NEWLINE | "\t")+ }
+
+
+reserved = _{ bool_true | bool_false | constant | immutable | mutable | define_function }
+
+
+bool_true = { "true" }
+bool_false = { "false" }
+
+constant = { "const" }
+immutable = { "immut" }
+mutable = { "mut" }
+
+
+define_function = { "func" }
+
+
+
+underscore = { "_" }
+
+equals = { "==" }
+not_equal = { "!=" }
+greater_than = { ">" }
+greater_or_equal = { ">=" }
+less_than = { "<" }
+less_or_equal = { "<=" }
+
+plus = { "+" }
+minus = { "-" }
+divide = { "/" }
+multiply = { "*" }
+
+binary_operator = _{ plus | minus | divide | multiply }
+
+assign = { "=" }
+
+
+alpha = { 'a'..'z' | 'A'..'Z' }
+numeric = { '0'..'9' }
+non_zero_numeric = { '1'..'9' }
+
+
+
+// identifiers
+valid_identifier = _{ (alpha ~ (numeric | underscore | alpha)*)+ }
+
+identifier = { !reserved ~ valid_identifier }
+
+integer = _{ non_zero_numeric ~ numeric* }
+
+
+
+
+
+// expressions
+expression = { infix_expression | inner_expression | integer }
+inner_expression = { parentheses_expression }
+parentheses_expression = { "(" ~ expression ~ ")" }
+
+// binary (infix)
+infix_expression = { inner_infix ~ binary_operator ~ inner_infix ~ (binary_operator ~ (infix_expression | parentheses_infix))* }
+parentheses_infix = { "(" ~ (infix_expression | inner_infix) ~ ")" }
+inner_infix = { integer | parentheses_infix }
+
+
+// unary
+assignment = { identifier ~ assign ~ expression }
