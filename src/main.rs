@@ -1,7 +1,3 @@
-use std::path::Path;
-use std::fs::File;
-use std::io::Write;
-
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
@@ -16,7 +12,7 @@ struct LyeParser;
 
 
 const SOURCE_EXTENSION: &str = "lye";
-const DEBUG_EXTENSION: &str = "debug";
+//const DEBUG_EXTENSION: &str = "debug";
 
 fn main() {
     // not constants so clap can be implemented
@@ -24,31 +20,59 @@ fn main() {
 
     let lye_src_file = program_dir.to_owned() + "src/" + "main." + SOURCE_EXTENSION;
 
-    let inter_file_dir = program_dir.to_owned() + "intermediate/";
+    //let inter_file_dir = program_dir.to_owned() + "intermediate/";
 
 
-    let mut lye_source_code = "".to_string();
-    let lye_source_file_buffer = FileBuffer::open(lye_src_file).expect("No lye source file provided.");
-    for &character in lye_source_file_buffer.iter() {
-        lye_source_code.push(char::from(character));
+    let lye_source_file_chars_vec = FileBuffer::open(lye_src_file).expect("No lye source file provided.").to_vec();
+    let mut lye_source_code = String::new();
+    for character in lye_source_file_chars_vec {
+        lye_source_code.push(char::from(character))
     }
 
+    let mut split_lye_source_code = lye_source_code.split(';');
 
 
-    let pairs = LyeParser::parse(Rule::identifier_list, &lye_source_code).unwrap();
+    let mut need_to_break = false;
+    loop {
+        match split_lye_source_code.next() {
+            Some(mut semi_split) if semi_split != "" => {
+                loop {
+                    let base_split = semi_split;
 
-    for pair in pairs {
-        println!("\n");
-        println!("Rule:    {:?}", pair.as_rule());
-        println!("Span:    {:?}", pair.as_span());
-        println!("Text:    {}", pair.as_str());
+                    semi_split = semi_split.trim_start_matches("\r\n");
+                    semi_split = semi_split.trim_start_matches('\r');
+                    semi_split = semi_split.trim_start_matches('\n');
+                    semi_split = semi_split.trim_start_matches('\t');
+                    semi_split = semi_split.trim_start_matches(' ');
 
-        for inner_pair in pair.into_inner() {
-            match inner_pair.as_rule() {
-                Rule::alpha => println!("Letter:  {}", inner_pair.as_str()),
-                Rule::numeric => println!("Digit:   {}", inner_pair.as_str()),
-                _ => unreachable!()
-            };
+                    if semi_split.is_empty() {
+                        need_to_break = true;
+                        break;
+                    }
+
+                    if base_split == semi_split {
+                        break;
+                    }
+                }
+                if need_to_break {
+                    break;
+                }
+
+
+                let expressions = LyeParser::parse(Rule::expression, &semi_split);
+                match expressions {
+                    Ok(expr) => {
+                        for pair in expr {
+                            println!("\n");
+                            println!("Rule:    {:?}", pair.as_rule());
+                            println!("Span:    {:?}", pair.as_span());
+                            println!("Text:    {}", pair.as_str());
+                        }
+                    },
+                    Err(_) => continue,
+                }
+            }
+            _ => break,
         }
     }
 }
