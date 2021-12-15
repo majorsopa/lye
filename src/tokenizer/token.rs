@@ -25,8 +25,8 @@ impl Literal {
 
     pub fn to_pretty_string(&self) -> String {
         return match self {
-            Literal::Str(_) => format!("String Literal {{ {} }}", self.to_string()),
-            Literal::Int(_) => format!("i32 Literal {{ {} }}", self.to_string()),
+            Literal::Str(_) => format!("String Literal {{ `{}` }}", self.to_string()),
+            Literal::Int(_) => format!("i32 Literal {{ `{}` }}", self.to_string()),
         }
     }
 }
@@ -69,7 +69,7 @@ impl Token {
     pub fn to_pretty_string(&self) -> String {
         return match self {
             Token::Literal(literal) => format!("Literal {{ {} }},", literal.to_pretty_string()),
-            Token::Lexeme(lexeme) => format!("Lexeme {{ {} }},", lexeme),
+            Token::Lexeme(lexeme) => format!("Lexeme {{ `{}` }},", lexeme),
         }
     }
 }

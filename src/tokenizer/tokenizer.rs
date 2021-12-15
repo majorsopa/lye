@@ -29,12 +29,14 @@ impl Tokenizer {
             match input_string.peek().unwrap() {
                 '\"' => {
                     // this deals with string literals
+                    input_string.next().unwrap();
                     while input_string.peek().unwrap() != &'\"' {
                         token_string.push(input_string.next().unwrap());
                     }
                     ret_vec.push(Token::new_string_literal(token_string));
+                    input_string.next().unwrap();
                 }
-                ' ' => continue,  // this will not be reached inside of a string literal
+                ' ' => { input_string.next().unwrap(); }  // this will not be reached inside of a string literal
                 '0'..='9' | '-' => {
                     'i32_loop: loop {
                         match input_string.peek() {
