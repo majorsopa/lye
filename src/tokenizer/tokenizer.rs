@@ -50,16 +50,24 @@ impl Tokenizer {
                     ret_vec.push(Token::from_i32(token_string.parse::<i32>().unwrap()));
                 }
                 _ => {
-                    for key_lexeme in &self.key_lexemes {
+                    let mut is_key_lexeme = false;
+                    'key_lexeme_char_loop: for key_lexeme in &self.key_lexemes {
                         'lexeme_char_loop: for character in key_lexeme.chars() {
-                            if &character == input_string.peek().unwrap() {
-                                token_string.push(input_string.next().unwrap());
-                            } else {
-                                break 'lexeme_char_loop;
+                            match input_string.peek() {
+                                None => break 'key_lexeme_char_loop,
+                                Some(next_char) => {
+                                    if next_char == &character {
+                                        token_string.push(input_string.next().unwrap());
+                                        is_key_lexeme = true;
+                                    } else {
+                                        is_key_lexeme = false;
+                                        break 'lexeme_char_loop;
+                                    }
+                                },
                             }
                         }
                     }
-                    if token_string == "" {  // not a key lexeme
+                    if !is_key_lexeme {  // not a key lexeme
                         'custom_lexeme_loop: while input_string.peek().is_some() {
                             match input_string.peek().unwrap() {
                                 ' ' => break 'custom_lexeme_loop,
